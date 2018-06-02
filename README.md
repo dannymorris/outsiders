@@ -1,2 +1,3 @@
 # outsiders
-Statistical learning methods for outlier detection
+
+`outsiders` is an R package for outlier analysis and anomaly detection. Most of the current functions are intended for use with multidimensional data sets.

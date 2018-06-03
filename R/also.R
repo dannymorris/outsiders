@@ -1,4 +1,31 @@
-ALSO <- function(data, method, cv=FALSE, folds=NULL, return_list=T, ...) {
+#' Attribute-wise Learning for Scoring Outliers.
+#' 
+#' @param data a matrix or data.frame.
+#' @param method a function name in the form of a character string which is 
+#' passed to formula (e.g. 'lm')
+#' @param cv logical indicating the use of cross validation for scoring
+#' @param folds an integer specifying the number of folds if cv = TRUE
+#' @param return_list logical, if TRUE return list of output (see details). If 
+#' FALSE return outlier scores only
+#' @param ... additional arguments passed to method formula
+#' @return If return_list = TRUE, the function returns a list containing outlier
+#' scores, the error matrix, the rmse_matrix, and feature weights. If return_list
+#' = FALSE, outlier scores only are returned.
+#' @examples
+#' # Build ncol(data) linear regression models. In each iteration, a new feature
+#' # is treated as the target and the remaining features are the predictors. With 
+#' # cv == TRUE, 10-fold cross validation is applied in each iteration. All points are 
+#' # therefore given an out of sample score.
+#' 
+#' also(data = scale(state.x77), method = 'lm', cv = TRUE, folds = 10, 
+#'      return_list = TRUE)
+#' 
+#' # Outlier scores from ncol(data) random forests
+#'  
+#' also(data = scale(state.x77), method = 'randomForest', cv = FALSE, 
+#'      return_list = FALSE)
+also <- function(data, method, cv = FALSE, folds = NULL, 
+                 return_list = TRUE, ...) {
     
     # Attribute-wise Learning for Scores Outliers (ALSO) is an unsupervised
     # outlier detection technique for locating outliers among a set of correlated
@@ -15,7 +42,18 @@ ALSO <- function(data, method, cv=FALSE, folds=NULL, return_list=T, ...) {
     # be applied to locate outliers that deviate from the correlation structure of
     # the data set.
     
-    require(caret)
+    #require(caret)
+    # using<-function(...) {
+    #     libs<-unlist(list(...))
+    #     req<-unlist(lapply(libs,require,character.only=TRUE))
+    #     need<-libs[req==FALSE]
+    #     if(length(need)>0){ 
+    #         install.packages(need)
+    #         lapply(need,require,character.only=TRUE)
+    #     }
+    # }
+    # 
+    # using("caret")
     
     # make data a data.frame
     data_df <- if (!('data.frame' %in% class(data))) {
@@ -24,26 +62,26 @@ ALSO <- function(data, method, cv=FALSE, folds=NULL, return_list=T, ...) {
     
     # characters to factors
     character_vars <- lapply(data_df, class) == "character"
-    iris[, character_vars] <- lapply(iris[character_vars], as.factor)
+    data_df[, character_vars] <- lapply(data_df[character_vars], as.factor)
     
     # prepare loop over all q variables
     n_cols <- ncol(data_df)
     
-    # N x q error matrix
+    # initialize empty N x q error matrix
     error_matrix <- matrix(ncol = ncol(data_df),
                            nrow = nrow(data_df))
     
-    # 1 x q rmse matrix
+    # init empty 1 x q rmse matrix
     rmse_mat <- matrix(ncol=ncol(data_df), nrow=1)
     
     # create variable-wise k-fold cv prediction error matrix
-    if (cv==TRUE) {
-        cv_error_mat <- matrix(ncol=1, nrow=nrow(data_df))
-        if(is.null(folds)) {
+    if (cv == TRUE) {
+        cv_error_mat <- matrix(ncol = 1, nrow = nrow(data_df))
+        if (is.null(folds)) {
             message("k_folds not supplided. default to 5")
-            k_folds <- createFolds(1:nrow(data_df), k=5)
+            k_folds <- caret::createFolds(1:nrow(data_df), k = 5)
         } else {
-            k_folds <- createFolds(1:nrow(data_df), k=folds)
+            k_folds <- caret::createFolds(1:nrow(data_df), k = folds)
         }
     }
     
@@ -51,22 +89,22 @@ ALSO <- function(data, method, cv=FALSE, folds=NULL, return_list=T, ...) {
     for (i in 1:n_cols) {
         
         # if no CV
-        if (cv==FALSE) {
+        if (cv == FALSE) {
             # prepare model df
             #X <- ifelse(n_cols == 2, data.frame(X=data_df[, -i]), data_df[,-i])
             if (n_cols == 2) {
-                X <- data.frame(X=data_df[,-i])
-                Y <- data.frame(Y=data_df[, i])
+                X <- data.frame(X = data_df[,-i])
+                Y <- data.frame(Y = data_df[, i])
             } else {
                 X <- data_df[,-i]
                 Y <- data_df[, i]
             }
             #Y <- ifelse(n_cols == 2, data.frame(X=data_df[, i]), data_df[,i])
-            model_df <- data.frame(X,Y)
+            model_df <- data.frame(X, Y)
             # prepare formula
-            f <- as.formula(paste("Y~", paste(colnames(X), collapse="+")))
+            f <- as.formula(paste("Y~", paste(colnames(X), collapse = "+")))
             # call method with formula and data_df args
-            fit <- do.call(method, list(formula=f, data=model_df, ...))
+            fit <- do.call(method, list(formula = f, data = model_df, ...))
             # get prediction errors
             if (class(Y) == 'factor') {
                 sq_error <- (as.numeric(fit$predicted) - as.numeric(Y))^2
@@ -74,8 +112,8 @@ ALSO <- function(data, method, cv=FALSE, folds=NULL, return_list=T, ...) {
                 sq_error <- (predict(fit) - Y)^2
             }
             # population error matrix and rmse matrix
-            error_matrix[,i] <- sq_error
-            rmse_mat[,i] <- mean(sq_error, na.rm=T)
+            error_matrix[, i] <- sq_error
+            rmse_mat[, i] <- mean(sq_error, na.rm = TRUE)
             
         } else {
             
@@ -94,16 +132,12 @@ ALSO <- function(data, method, cv=FALSE, folds=NULL, return_list=T, ...) {
                     X_test <- data_df[k_folds[[j]], -i]
                     Y_test <- data_df[k_folds[[j]], i]
                 }
-                # X_train <- data.frame(data_df[-k_folds[[j]], -i])
-                # Y_train <- data.frame(data_df[-k_folds[[j]], i])
-                # X_test <- data.frame(data_df[k_folds[[j]], -i])
-                # Y_test <- data.frame(data_df[k_folds[[j]], i])
                 # prepare model df
                 model_df <- data.frame(X_train, Y_train)
                 # prepare formula
                 f <- as.formula(paste("Y_train ~", paste(colnames(X_train), collapse="+")))
                 # call method with formula and data arguments
-                fit <- do.call(method, list(formula=f, data=model_df))
+                fit <- do.call(method, list(formula = f, data = model_df))
                 # get out of sample predictions
                 oos_predict <- predict(fit, newdata = X_test)
                 if (class(Y_train) == 'factor') {
@@ -112,31 +146,32 @@ ALSO <- function(data, method, cv=FALSE, folds=NULL, return_list=T, ...) {
                     oos_sq_error <- (oos_predict - Y_test)^2
                 }
                 # populate cv prediction error
-                cv_error_mat[k_folds[[j]],] <- oos_sq_error # get errors for jth variable
-                
+                cv_error_mat[k_folds[[j]], ] <- oos_sq_error # get errors for jth variable
             }
+            
             # population error matrix and rmse matrix
-            error_matrix[,i] <- cv_error_mat
-            rmse_mat[,i] <- mean(cv_error_mat)
+            error_matrix[, i] <- cv_error_mat
+            rmse_mat[, i] <- mean(cv_error_mat)
         }
     }
     # adjusted rmse if > 1 then 1 else rmse
     bounded_rmse <- ifelse(rmse_mat > 1, 1, rmse_mat)
     # compute feature weights as 1-adjusted rmse
-    feature_weights <- 1-bounded_rmse
+    feature_weights <- 1 - bounded_rmse
     # compute outlier scores
     scores <- apply(error_matrix, 1, function(x) {
-        sum(x*feature_weights, na.rm=T)
+        sum(x * feature_weights, na.rm = TRUE)
     })
-    
     
     if (return_list == TRUE) {
         # list output
-        list(scores=scores,
-             error_matrix=error_matrix,
-             rmse_mat=rmse_mat,
-             weights=feature_weights)
+        return(
+            list(scores = scores,
+                 error_matrix = error_matrix,
+                 rmse_mat = rmse_mat,
+                 weights = feature_weights)
+        )
     } else {
-        scores
+        return(scores)
     }
 }

@@ -56,7 +56,7 @@ also <- function(data, method, cv = FALSE, folds = NULL,
     # using("caret")
     
     # make data a data.frame
-    data_df <- if (!('data.frame' %in% class(data))) {
+    data_df <- if (class(data) != 'data.frame') {
         data.frame(data)
     } else data
     

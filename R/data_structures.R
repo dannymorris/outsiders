@@ -14,6 +14,7 @@
 #' x <- data.frame(gender = sample(c("male", "female"), 15, T),
 #'                 age_cat = sample(c("young", "old", "unknown"), 15, T)) 
 #' one_hot(data = x, normalize = TRUE)
+#' 
 one_hot <- function(data, normalize = FALSE) {
     
     # ensure that data is either data.frame or matrix
@@ -35,11 +36,7 @@ one_hot <- function(data, normalize = FALSE) {
         warning("Column names missing from data. Defaults to X[i]")
         colnames(data_mat) <- paste0("X", 1:ncol(data_mat))
     }
-    
-    # if (is.null(colnames(data_mat))) {
-    #     colnames(data_mat) <- paste0("X", 1:ncol(data_mat))
-    # }
-    
+
     # each attribute binary representation will be added to list
     # binary reps are column bound at end of function
     init_list <- list()
@@ -80,8 +77,10 @@ one_hot <- function(data, normalize = FALSE) {
         init_list[[i]] <- ith_var_binary_mat
     }
     
+    # normalize elements in list if TRUE
     init_list <- if (normalize == TRUE) {
-        fij <- function(x) {
+        
+        col_mean <- function(x) {
             sum(x) / length(x)
         }
         
@@ -89,7 +88,7 @@ one_hot <- function(data, normalize = FALSE) {
             # ni
             ni <- ncol(x)
             # fij of each column in the ith binary matrix
-            col_means <- apply(x, 2, function(y) fij(y))
+            col_means <- apply(x, 2, function(y) col_mean(y))
             # normalization factors
             norm <- sqrt(ni * col_means * (1 - col_means))
             # divide each column in ith binary matrix by corresponding norm factor
@@ -101,14 +100,3 @@ one_hot <- function(data, normalize = FALSE) {
     output <- do.call("cbind", init_list)
     return(output)
 }
-
-data <- data.frame(gender = sample(c("male", "female", "unknown"), 150, T),
-                   race = sample(c("black", "white"), 150, T))
-
-data 
-
-i <- 1
-ni <- length(unique(data[, i]))
-one_hot_veci <- one_hot(data)[,i]
-fij <- sum(one_hot_veci)/length(one_hot_veci)
-sqrt(ni * fij * (1-fij))

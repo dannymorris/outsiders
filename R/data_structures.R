@@ -80,15 +80,11 @@ one_hot <- function(data, normalize = FALSE) {
     # normalize elements in list if TRUE
     init_list <- if (normalize == TRUE) {
         
-        col_mean <- function(x) {
-            sum(x) / length(x)
-        }
-        
         lapply(init_list, function(x) {
             # ni
             ni <- ncol(x)
             # fij of each column in the ith binary matrix
-            col_means <- apply(x, 2, function(y) col_mean(y))
+            col_means <- apply(x, 2, fast_mean)
             # normalization factors
             norm <- sqrt(ni * col_means * (1 - col_means))
             # divide each column in ith binary matrix by corresponding norm factor

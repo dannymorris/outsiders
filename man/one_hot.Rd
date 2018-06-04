@@ -30,4 +30,5 @@ of records taking the value of 1 for the jth variable
 x <- data.frame(gender = sample(c("male", "female"), 15, T),
                 age_cat = sample(c("young", "old", "unknown"), 15, T)) 
 one_hot(data = x, normalize = TRUE)
+
 }

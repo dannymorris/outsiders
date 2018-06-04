@@ -24,6 +24,7 @@
 #'  
 #' also(data = scale(state.x77), method = 'randomForest', cv = FALSE, 
 #'      return_list = FALSE)
+#' @export
 also <- function(data, method, cv = FALSE, folds = NULL, 
                  return_list = TRUE, ...) {
     
@@ -41,20 +42,7 @@ also <- function(data, method, cv = FALSE, folds = NULL,
     # accomplished by summing the weighed scores. Extreme-value analysis can then
     # be applied to locate outliers that deviate from the correlation structure of
     # the data set.
-    
-    #require(caret)
-    # using<-function(...) {
-    #     libs<-unlist(list(...))
-    #     req<-unlist(lapply(libs,require,character.only=TRUE))
-    #     need<-libs[req==FALSE]
-    #     if(length(need)>0){ 
-    #         install.packages(need)
-    #         lapply(need,require,character.only=TRUE)
-    #     }
-    # }
-    # 
-    # using("caret")
-    
+
     # make data a data.frame
     data_df <- if (class(data) != 'data.frame') {
         data.frame(data)
@@ -154,6 +142,7 @@ also <- function(data, method, cv = FALSE, folds = NULL,
             rmse_mat[, i] <- mean(cv_error_mat)
         }
     }
+    
     # adjusted rmse if > 1 then 1 else rmse
     bounded_rmse <- ifelse(rmse_mat > 1, 1, rmse_mat)
     # compute feature weights as 1-adjusted rmse

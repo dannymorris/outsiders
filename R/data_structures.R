@@ -15,6 +15,7 @@
 #'                 age_cat = sample(c("young", "old", "unknown"), 15, T)) 
 #' one_hot(data = x, normalize = TRUE)
 #' 
+#' @export
 one_hot <- function(data, normalize = FALSE) {
     
     # ensure that data is either data.frame or matrix

@@ -1,3 +1,10 @@
+#' PCA Rotated Bagging
+#' 
+#' @param data a matrix or data.frame.
+#' @return 
+#' @examples
+#' @export
+#' 
 pca_bag <- function(data, scale=T, n_features=floor(sqrt(ncol(data))),
                     n_iterations=50, method) {
     

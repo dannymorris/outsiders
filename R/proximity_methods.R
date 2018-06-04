@@ -1,39 +1,43 @@
-nearest_neighbors <- function(data, d=NULL, ids, k) {
+#' Unsupervised K-Nearest Neighbors
+#' @param distance_matrix A distance matrix
+#' @param k Value for k. Either an integer or sequence of integers
+#' @return A data.frame
+#' @details A distance matrix (either a full square matrix or a "dist" object) is
+#' required as input.
+#' @examples my_dist <- dist(scale(state.x77))
+#' nearest_neighbors(distance_matrix = my_dist, k = 1:3)
+#' @export
+#' 
+nearest_neighbors <- function(distance_matrix,  k) {
     
-    require(dplyr)
+    if (missing(distance_matrix)) 
+        stop("Distance matrix required.")
     
-    if (missing(ids))
-        stop('"ids" is missing. provide a string of row labels')
+    if (class(distance_matrix) != "dist" && nrow(distance_matrix) != ncol(distance_matrix))
+        stop("Distance matrix not a square matrix.")
     
     if (missing(k)) {
         k <- 1
-        warning('"k" is missing. defaults to 1')
+        warning('k not specified. Defaults to 1.')
     }
     
-    if (!is.null(d)) {
-        data <- NULL
-        dmat <- as.matrix(d)
-    }
+    dmat <- if (class(distance_matrix) != "matrix") {
+        as.matrix(distance_matrix)
+    } 
     
-    if (!is.null(data)) {
-        if (!all(apply(data, 2, class) == 'numeric'))
-            stop("all columns of the data set must be numeric")
-        
-        d <- dist(data)
-        dmat <- as.matrix(d)
-    }
-    
-    dimnames(dmat) <- list(ids, ids)
-    pairs_key <- t(combn(colnames(dmat), 2))
-    pairwise_d <- data.frame(col=colnames(dmat)[col(dmat)],
-                             row=rownames(dmat)[row(dmat)],
-                             distance=c(dmat))
-    pairwise_d %>%
-        tbl_df() %>%
-        filter(col != row) %>%
-        mutate_at(vars(1,2), as.character) %>%
-        group_by(col) %>%
-        arrange(col, distance) %>%
+    #dimnames(dmat) <- list(id_var, id_var)
+    pairwise_distances <- data_frame(N1 = rownames(dmat)[col(dmat)],
+                                     N2 = colnames(dmat)[row(dmat)],
+                                     distance = c(dmat)) %>%
+        filter(N1 != N2)
+
+    output <- pairwise_distances %>%
+        group_by(N1) %>%
+        arrange(distance) %>%
         mutate(knn = row_number()) %>%
-        filter(knn %in% k)
+        filter(knn %in% k) %>%
+        arrange(N1, knn) %>%
+        ungroup()
+    
+    return(output)
 }

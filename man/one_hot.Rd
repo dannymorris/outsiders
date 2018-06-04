@@ -4,7 +4,7 @@
 \alias{one_hot}
 \title{Categorical Data Matrix to One-Hot Binary Matrix}
 \usage{
-one_hot(data)
+one_hot(data, normalize = FALSE)
 }
 \arguments{
 \item{data}{a matrix or data.frame of categorical variables as character 

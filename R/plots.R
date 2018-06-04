@@ -125,6 +125,13 @@ bivden<-function(x, y, ngridx = 30, ngridy = 30, constant.x = 1, constant.y = 1)
 }
 
 
+#' Chi-Squared MVN Plot
+#' 
+#' @param data a matrix or data.frame.
+#' @return 
+#' @examples
+#' @export
+#' 
 chisq_plot <- function(data, plot_line=FALSE, line_col='black', ...) {
     
     if (!is.matrix(data) & !is.data.frame(data)) 

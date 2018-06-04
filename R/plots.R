@@ -125,36 +125,36 @@ bivden<-function(x, y, ngridx = 30, ngridy = 30, constant.x = 1, constant.y = 1)
 }
 
 
-#' Chi-Squared MVN Plot
+#' Chi-Squared Coordinates for Multivariate Normality
 #' 
 #' @param data a matrix or data.frame.
 #' @return 
 #' @examples
 #' @export
 #' 
-chisq_plot <- function(data, plot_line=FALSE, line_col='black', ...) {
+chisq_mvn <- function(data) {
     
-    if (!is.matrix(data) & !is.data.frame(data)) 
-        stop("Data must be a matrix or data frame")
+    if (!is.matrix(data) && !is.data.frame(data)) 
+        stop("Data must be a matrix or data frame.")
     
-    n <- nrow(data)
-    p <- ncol(data)
-    xbar <- apply(data, 2, mean)
+    data_mat <- if (!is.matrix(data)) {
+        as.matrix(data)
+    } else data
     
-    S <- var(data)
-    S <- solve(S)
+    n_rows <- nrow(data_mat)
+    n_cols <- ncol(data_mat)
+    xbar <- apply(data_mat, 2, fast_mean)
     
-    index <- (1:n)/(n+1)
-    xcent <- t(t(data) - xbar)
+    covariance_matrix <- var(data_mat)
+    lapack <- solve(covariance_matrix)
     
-    di <- apply(xcent, 1, function(x,S) x %*% S %*% x,S)
-    quant <- qchisq(index,p)
+    index <- (1:n_rows) / (n_rows + 1)
+    centered_data_mat <- t(t(data_mat) - xbar)
     
-    plot(quant, sort(di), ylab = "Ordered distances",
-         xlab = "Chi-square quantile", ...)
+    di <- apply(centered_data_mat, 1, function(x,lapack) x %*% lapack %*% x,lapack)
+    quant <- qchisq(index, n_cols)
     
-    if (plot_line == TRUE) {
-        df <- data.frame(quant=quant, sort_di = sort(di))
-        abline(lm(sort_di ~ quant, data=df), col=line_col, lty=2)        
-    }
+    quantiles <- data_frame(observed = sort(di), 
+                            theoretical = quant)
+    return(quantiles)
 }

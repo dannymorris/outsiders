@@ -44,9 +44,9 @@ also <- function(data, method, cv = FALSE, folds = NULL,
     # the data set.
 
     # make data a data.frame
-    data_df <- if (class(data) != 'data.frame') {
-        data.frame(data)
-    } else data
+    data_df <- dplyr::as_tibble(data)
+    original_colnames <- colnames(data_df)
+    colnames(data_df) <- gsub(" ", "", colnames(data_df))
     
     # characters to factors
     character_vars <- lapply(data_df, class) == "character"
@@ -60,7 +60,7 @@ also <- function(data, method, cv = FALSE, folds = NULL,
                            nrow = nrow(data_df))
     
     # init empty 1 x q rmse matrix
-    rmse_mat <- matrix(ncol=ncol(data_df), nrow=1)
+    rmse_mat <- matrix(ncol = ncol(data_df), nrow = 1)
     
     # create variable-wise k-fold cv prediction error matrix
     if (cv == TRUE) {
@@ -80,24 +80,21 @@ also <- function(data, method, cv = FALSE, folds = NULL,
         if (cv == FALSE) {
             # prepare model df
             #X <- ifelse(n_cols == 2, data.frame(X=data_df[, -i]), data_df[,-i])
-            if (n_cols == 2) {
-                X <- data.frame(X = data_df[,-i])
-                Y <- data.frame(Y = data_df[, i])
-            } else {
-                X <- data_df[,-i]
-                Y <- data_df[, i]
-            }
-            #Y <- ifelse(n_cols == 2, data.frame(X=data_df[, i]), data_df[,i])
-            model_df <- data.frame(X, Y)
+            X <- data_df[, -i]
+            Y <- data_df[, i]
+            model_df <- dplyr::bind_cols(X, Y)
             # prepare formula
-            f <- as.formula(paste("Y~", paste(colnames(X), collapse = "+")))
+            f <- as.formula(paste(colnames(Y),
+                                  "~",
+                                  paste(colnames(X), collapse="+")))
             # call method with formula and data_df args
-            fit <- do.call(method, list(formula = f, data = model_df, ...))
+            fit <- do.call(method, list(formula = f, data = model_df))
             # get prediction errors
-            if (class(Y) == 'factor') {
-                sq_error <- (as.numeric(fit$predicted) - as.numeric(Y))^2
+            fit_predict <- predict(fit)
+            if (class(pull(Y)) == 'factor') {
+                sq_error <- (as.numeric(oos_predict) - as.numeric(dplyr::pull(Y)))^2
             } else {
-                sq_error <- (predict(fit) - Y)^2
+            sq_error <- (fit_predict - dplyr::pull(Y))^2
             }
             # population error matrix and rmse matrix
             error_matrix[, i] <- sq_error
@@ -109,29 +106,29 @@ also <- function(data, method, cv = FALSE, folds = NULL,
             # each observation gets out of sample prediction
             for (j in 1:length(k_folds)) {
                 # prepare train and test splits
-                if (n_cols == 2) {
-                    X_train <- data.frame(X_train = data_df[-k_folds[[j]], -i])
-                    Y_train <- data.frame(Y_train = data_df[-k_folds[[j]], i])
-                    X_test <- data.frame(X_test = data_df[k_folds[[j]], -i])
-                    Y_test <- data.frame(Y_test = data_df[k_folds[[j]], i])
-                } else {
-                    X_train <- data_df[-k_folds[[j]], -i]
-                    Y_train <- data_df[-k_folds[[j]], i]
-                    X_test <- data_df[k_folds[[j]], -i]
-                    Y_test <- data_df[k_folds[[j]], i]
-                }
-                # prepare model df
-                model_df <- data.frame(X_train, Y_train)
+                # if (n_cols == 2) {
+                X_train <- data_df[-k_folds[[j]], -i]
+                Y_train <- data_df[-k_folds[[j]], i]
+                X_test <- data_df[k_folds[[j]], -i]
+                Y_test <- data_df[k_folds[[j]], i]
+                
+                # prepare rain/test dfs
+                model_df <- dplyr::bind_cols(X_train, Y_train)
+                test_df <- dplyr::bind_cols(X_test, Y_test)
+                
                 # prepare formula
-                f <- as.formula(paste("Y_train ~", paste(colnames(X_train), collapse="+")))
+                f <- as.formula(paste(colnames(Y_train),
+                                      "~",
+                                      paste(colnames(X_train), collapse="+"))                    )
                 # call method with formula and data arguments
                 fit <- do.call(method, list(formula = f, data = model_df))
                 # get out of sample predictions
-                oos_predict <- predict(fit, newdata = X_test)
-                if (class(Y_train) == 'factor') {
-                    oos_sq_error <- (as.numeric(oos_predict) - as.numeric(Y_test))^2
+                oos_predict <- predict(fit, newdata = test_df)
+                if (class(pull(Y_train)) == 'factor') {
+                    oos_sq_error <- (as.numeric(oos_predict) - 
+                                         as.numeric(dplyr::pull(Y_test)))^2
                 } else {
-                    oos_sq_error <- (oos_predict - Y_test)^2
+                    oos_sq_error <- (oos_predict - dplyr::pull(Y_test))^2
                 }
                 # populate cv prediction error
                 cv_error_mat[k_folds[[j]], ] <- oos_sq_error # get errors for jth variable
@@ -139,7 +136,7 @@ also <- function(data, method, cv = FALSE, folds = NULL,
             
             # population error matrix and rmse matrix
             error_matrix[, i] <- cv_error_mat
-            rmse_mat[, i] <- mean(cv_error_mat)
+            rmse_mat[, i] <- fast_mean(cv_error_mat)
         }
     }
     

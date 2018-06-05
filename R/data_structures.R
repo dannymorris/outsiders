@@ -20,7 +20,7 @@ one_hot <- function(data, normalize = FALSE) {
     
     # ensure that data is either data.frame or matrix
     if (!(any(c("data.frame", "matrix") %in% class(data)))) 
-        stop("Data must be a data.frame or matrix")
+        stop("Data must be a data frame, or matrix")
     
     # ensure no numeric column classes in data
     if (any(c("numeric", "integer") %in% apply(data, 2, class)))
@@ -80,7 +80,6 @@ one_hot <- function(data, normalize = FALSE) {
     
     # normalize elements in list if TRUE
     init_list <- if (normalize == TRUE) {
-        
         lapply(init_list, function(x) {
             # ni
             ni <- ncol(x)

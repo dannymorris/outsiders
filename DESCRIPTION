@@ -3,7 +3,7 @@ Version: 0.0.0.9000
 Title: Multidimensional Outlier Detection
 Description: Implementations of various multidimensional outlier detection algorithms
     in R. Many of the ideas come from "Outlier Analysis" (C. C. Aggarwal. Outlier Analyis.
-    *Springer*, 2017.). It combines supervised and unsupervised approaches, subspace 
+    Springer, 2017.). It combines supervised and unsupervised approaches, subspace 
     methods, and ensembles.
 Authors@R: person("Danny", "Morris", , "usc00@hotmail.com", c("aut", "cre"))
 License: MIT + file LICENSE

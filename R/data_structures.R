@@ -93,6 +93,7 @@ one_hot <- function(data, normalize = FALSE) {
     } else init_list
     
     # column bind list elements
-    output <- do.call("cbind", init_list)
+    output <- do.call("cbind", init_list) 
+    
     return(output)
 }

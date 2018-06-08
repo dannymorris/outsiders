@@ -2,7 +2,7 @@
 
 export(also)
 export(chisq_mvn)
+export(dvr_ensemble)
 export(nearest_neighbors)
 export(one_hot)
 export(pca_bag)
-export(regression_ensemble)

@@ -31,6 +31,10 @@ Defaults to mean.}
 \item{scores_only}{logical, if TRUE return a vector of outlier scores. If FALSE,
 return the error matrix and outlier scores}
 }
+\value{
+if scores_only = TRUE, a vector of outlier scores. If FALSE, a list
+with outlier scores and the ensemble error matrix
+}
 \description{
 Dependent Variable Regression Ensemble
 }

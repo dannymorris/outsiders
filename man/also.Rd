@@ -4,27 +4,32 @@
 \alias{also}
 \title{Attribute-wise Learning for Scoring Outliers.}
 \usage{
-also(data, method, cv = FALSE, folds = NULL, return_list = TRUE, ...)
+also(data, scale_numerics = TRUE, method, cross_validate = TRUE,
+  n_folds = 5, scores_only = TRUE, ...)
 }
 \arguments{
 \item{data}{a matrix or data.frame.}
 
+\item{scale_numerics}{logical, if TRUE then center and scale numeric variables.
+If FALSE then ignore scaling}
+
 \item{method}{a function name in the form of a character string which is 
 passed to formula (e.g. 'lm')}
 
-\item{cv}{logical indicating the use of cross validation for scoring}
+\item{cross_validate}{logical indicating the use of cross validation for scoring}
 
-\item{folds}{an integer specifying the number of folds if cv = TRUE}
+\item{n_folds}{an integer specifying the number of folds if cross validating.
+Defaults to 5}
 
-\item{return_list}{logical, if TRUE return list of output (see details). If 
-FALSE return outlier scores only}
+\item{scores_only}{logical, if TRUE return outlier scores only. If FALSE
+return a list with outlier scores and the error matrix}
 
 \item{...}{additional arguments passed to method formula}
 }
 \value{
-If return_list = TRUE, the function returns a list containing outlier
-scores, the error matrix, the rmse_matrix, and feature weights. If return_list
-= FALSE, outlier scores only are returned.
+If scores_only = TRUE, only outlier scores are returned. If FALSE, 
+the function returns a list containing outlier scores, the error matrix, 
+the rmse_matrix, and feature weights.
 }
 \description{
 Attribute-wise Learning for Scoring Outliers.
@@ -32,14 +37,17 @@ Attribute-wise Learning for Scoring Outliers.
 \examples{
 # Build ncol(data) linear regression models. In each iteration, a new feature
 # is treated as the target and the remaining features are the predictors. With 
-# cv == TRUE, 10-fold cross validation is applied in each iteration. All points are 
+# cross_validate == TRUE, 10-fold cross validation is applied in each iteration. All points are 
 # therefore given an out of sample score.
 
-also(data = scale(state.x77), method = 'lm', cv = TRUE, folds = 10, 
+also(data = scale(state.x77), method = 'lm', cross_validate = TRUE, n_folds = 10, 
      return_list = TRUE)
 
 # Outlier scores from ncol(data) random forests
  
-also(data = scale(state.x77), method = 'randomForest', cv = FALSE, 
+also(data = scale(state.x77), method = 'randomForest', cross_validate = FALSE, 
      return_list = FALSE)
+}
+\references{
+see "Outlier Analysis" (C.C Aggarwal. Springer, 2017)
 }

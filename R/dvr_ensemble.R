@@ -14,6 +14,8 @@
 #' training iteration. If "test", score out of sample points in each iteration.
 #' @param scores_only logical, if TRUE return a vector of outlier scores. If FALSE,
 #' return the error matrix and outlier scores
+#' @return if scores_only = TRUE, a vector of outlier scores. If FALSE, a list
+#' with outlier scores and the ensemble error matrix
 #' @references section 3.2.1 of "Outlier Analysis" (C. C. Aggarwal. Outlier Analyis. 
 #' Springer, 2017.)
 #' @examples

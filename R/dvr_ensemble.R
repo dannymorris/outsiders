@@ -67,18 +67,18 @@ dvr_ensemble <- function(formula, data, method = 'lm',
         
         # score all N points if score_set = "all" or if unspecified
         # score only test points if score_set = "test"
-        if (score_set == "all" | length(score_set) == 2) {
+        if (score_set == "all" || length(score_set) == 2) {
             # square_errors() in utils.R
             # populate error vector with squared errors
-            error_vector <- square_errors(model_object = fit, 
-                                          newdata = as.data.frame(data_mat),
+            predictions <- predict(fit, as.data.frame(data_mat))
+            error_vector <- square_errors(predictions = predictions,
                                           actual = data_mat[, as.character(formula[2])])
         } else {
             # prepare test set
             testing_set <- data_mat[-random_train_index, ]
+            predictions <- predict(fit, as.data.frame(testing_set))
             error_vector[-random_train_index] <- 
-                square_errors(model_object = fit,
-                              newdata = as.data.frame(testing_set),
+                square_errors(predictions = predictions,
                               actual = testing_set[, as.character(formula[2])])
             
         } 

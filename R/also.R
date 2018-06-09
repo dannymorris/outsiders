@@ -10,24 +10,21 @@
 #' Defaults to 5
 #' @param scores_only logical, if TRUE return outlier scores only. If FALSE
 #' return a list with outlier scores and the error matrix
-#' @param ... additional arguments passed to method formula
+#' @param ... additional arguments passed to method 
 #' @return If scores_only = TRUE, only outlier scores are returned. If FALSE, 
-#' the function returns a list containing outlier scores, the error matrix, 
-#' the rmse_matrix, and feature weights.
-#' @references see "Outlier Analysis" (C.C Aggarwal. Springer, 2017)
+#' the function returns a list containing outlier scores, feature RMSE, feature weights,
+#' raw prediction error matrix, squared prediction error matrix, and feature weighted squared
+#' prediction error matrix
+#' @references see "Outlier Analysis" (C.C Aggarwal. Springer, 2017) section 7.7
 #' @examples
-#' # Build ncol(data) linear regression models. In each iteration, a new feature
-#' # is treated as the target and the remaining features are the predictors. With 
-#' # cross_validate == TRUE, 10-fold cross validation is applied in each iteration. All points are 
-#' # therefore given an out of sample score.
+#' # OLS with cross validation for out of sample scoring
+#' also(data = state.x77, scale_numerics = TRUE, method = 'lm', cross_validate = TRUE, 
+#' n_folds = 10, scores_only = TRUE)
 #' 
-#' also(data = scale(state.x77), method = 'lm', cross_validate = TRUE, n_folds = 10, 
-#'      return_list = TRUE)
-#' 
-#' # Outlier scores from ncol(data) random forests
-#'  
-#' also(data = scale(state.x77), method = 'randomForest', cross_validate = FALSE, 
-#'      return_list = FALSE)
+#' # random forest without cross validation#'  
+#' rf_also <- also(data = scale(state.x77), scale_numerics = FALSE, method = 'randomForest', 
+#' cross_validate = FALSE, scores_only = FALSE)
+#' rf_also$scores; rf_also$feature_weights; rf_also$raw_error_matrix
 #' @export
 also <- function(data, scale_numerics = TRUE, method, cross_validate = TRUE, 
                  n_folds = 5, scores_only = TRUE, ...) {
@@ -60,16 +57,19 @@ also <- function(data, scale_numerics = TRUE, method, cross_validate = TRUE,
     # prepare loop over all q variables
     n_cols <- ncol(data_tbl)
     
-    # initialize empty N x q error matrix
-    error_matrix <- matrix(ncol = ncol(data_tbl),
-                           nrow = nrow(data_tbl))
+    # initialize empty N x q error matrix for squared errors
+    raw_error_matrix <- matrix(ncol = ncol(data_tbl),
+                              nrow = nrow(data_tbl))
+    
+    sq_error_matrix <- raw_error_matrix
     
     # init empty 1 x q rmse matrix
     rmse_mat <- matrix(ncol = ncol(data_tbl), nrow = 1)
     
     # create variable-wise k-fold cross_validate prediction error matrix
     if (cross_validate == TRUE) {
-        cv_error_mat <- matrix(ncol = 1, nrow = nrow(data_tbl))
+        cv_raw_error_mat <- matrix(ncol = 1, nrow = nrow(data_tbl))
+        cv_sq_error_mat <- cv_raw_error_mat
         if (is.null(n_folds)) {
             message("n_folds not supplided. default to 5")
             folds <- caret::createFolds(1:nrow(data_tbl), k = 5)
@@ -98,12 +98,16 @@ also <- function(data, scale_numerics = TRUE, method, cross_validate = TRUE,
             # get predictions from fit
             fit_predict <- predict(fit)
             
+            # raw prediction errors
+            raw_error <- dplyr::pull(Y) - fit_predict
+            
             # square fit prediction errors
             sq_error <- square_errors(predictions = fit_predict,
                                       actual = dplyr::pull(Y))
             
             # populate error matrix and rmse matrix
-            error_matrix[, i] <- sq_error
+            sq_error_matrix[, i] <- sq_error
+            raw_error_matrix[, i] <- raw_error
             rmse_mat[, i] <- mean(sq_error, na.rm = TRUE)
             
         } else {
@@ -138,15 +142,19 @@ also <- function(data, scale_numerics = TRUE, method, cross_validate = TRUE,
                 # }
                 # 
                 oos_predict <- predict(fit, newdata = test_tbl)
+                oos_raw_error <- dplyr::pull(Y_test) - oos_predict
                 oos_sq_error <- square_errors(predictions = oos_predict, 
                                               actual = dplyr::pull(Y_test))
-                # populate cross_validate prediction error
-                cv_error_mat[folds[[j]], ] <- oos_sq_error # get errors for jth variable
+                
+                cv_raw_error_mat[folds[[j]], ] <- oos_raw_error
+                # populate cross_validate squared prediction error
+                cv_sq_error_mat[folds[[j]], ] <- oos_sq_error # get errors for jth variable
             }
             
             # populatie error matrix and rmse matrix
-            error_matrix[, i] <- cv_error_mat
-            rmse_mat[, i] <- fast_mean(cv_error_mat)
+            raw_error_matrix[, i] <- cv_raw_error_mat
+            sq_error_matrix[, i] <- cv_sq_error_mat
+            rmse_mat[, i] <- fast_mean(cv_sq_error_mat)
         }
     }
     
@@ -154,18 +162,20 @@ also <- function(data, scale_numerics = TRUE, method, cross_validate = TRUE,
     bounded_rmse <- ifelse(rmse_mat > 1, 1, rmse_mat)
     # compute feature weights as 1-adjusted rmse
     feature_weights <- 1 - bounded_rmse
+    # multiple rows in error matrix by feature weights
+    feature_weighted_sq_error_matrix <- sweep(sq_error_matrix, 2, feature_weights, "*") 
     # compute outlier scores
-    scores <- apply(error_matrix, 1, function(x) {
-        sum(x * feature_weights, na.rm = TRUE)
-    })
+    scores <- rowSums(feature_weighted_sq_error_matrix)
     
     if (scores_only == TRUE) {
         return(scores)
         # list output
     } else {
         return(list(scores = scores,
-                    error_matrix = error_matrix,
-                    rmse_mat = rmse_mat,
-                    weights = feature_weights))    
+                    feature_rmse = rmse_mat,
+                    feature_weights = feature_weights,
+                    raw_error_matrix = raw_error_matrix,
+                    sq_error_matrix = sq_error_matrix,
+                    feature_weighted_sq_error_matrix = feature_weighted_sq_error_matrix))    
         }
 }

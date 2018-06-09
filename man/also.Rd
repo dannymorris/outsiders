@@ -24,30 +24,27 @@ Defaults to 5}
 \item{scores_only}{logical, if TRUE return outlier scores only. If FALSE
 return a list with outlier scores and the error matrix}
 
-\item{...}{additional arguments passed to method formula}
+\item{...}{additional arguments passed to method}
 }
 \value{
 If scores_only = TRUE, only outlier scores are returned. If FALSE, 
-the function returns a list containing outlier scores, the error matrix, 
-the rmse_matrix, and feature weights.
+the function returns a list containing outlier scores, feature RMSE, feature weights,
+raw prediction error matrix, squared prediction error matrix, and feature weighted squared
+prediction error matrix
 }
 \description{
 Attribute-wise Learning for Scoring Outliers.
 }
 \examples{
-# Build ncol(data) linear regression models. In each iteration, a new feature
-# is treated as the target and the remaining features are the predictors. With 
-# cross_validate == TRUE, 10-fold cross validation is applied in each iteration. All points are 
-# therefore given an out of sample score.
+# OLS with cross validation for out of sample scoring
+also(data = state.x77, scale_numerics = TRUE, method = 'lm', cross_validate = TRUE, 
+n_folds = 10, scores_only = TRUE)
 
-also(data = scale(state.x77), method = 'lm', cross_validate = TRUE, n_folds = 10, 
-     return_list = TRUE)
-
-# Outlier scores from ncol(data) random forests
- 
-also(data = scale(state.x77), method = 'randomForest', cross_validate = FALSE, 
-     return_list = FALSE)
+# random forest without cross validation#'  
+rf_also <- also(data = scale(state.x77), scale_numerics = FALSE, method = 'randomForest', 
+cross_validate = FALSE, scores_only = FALSE)
+rf_also$scores; rf_also$feature_weights; rf_also$raw_error_matrix
 }
 \references{
-see "Outlier Analysis" (C.C Aggarwal. Springer, 2017)
+see "Outlier Analysis" (C.C Aggarwal. Springer, 2017) section 7.7
 }

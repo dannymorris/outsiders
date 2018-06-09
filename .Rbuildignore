@@ -1,2 +1,6 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^README\.md$
+^style_guide\.md$
+^dev\.R$
+^R/dev\.R$

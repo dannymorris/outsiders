@@ -21,7 +21,7 @@
 #' @examples
 #' ensemble_lm(formula = Sepal.Length ~ ., data = iris[,-5],
 #' n_predictions=100, n_train_points=100, error_agg_fun = median, 
-#' scores_only = T)#' 
+#' scores_only = T)
 #' @export
 dvr_ensemble <- function(formula, data, method = 'lm', 
                          n_predictions, n_train_points, 

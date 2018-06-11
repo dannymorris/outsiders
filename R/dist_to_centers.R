@@ -1,4 +1,13 @@
-
+#' Distance to centroid
+#' @param data data
+#' @param labels labels
+#' @param centers centers
+#' @return a matrix
+#' @references section 3.2.1 of "Outlier Analysis" (C. C. Aggarwal. Outlier Analyis. 
+#' Springer, 2017.)
+#' @examples
+#' x
+#' @export
 dist_to_centers <- function(data, labels, centers) {
     
     # append labels to data

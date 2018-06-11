@@ -41,7 +41,7 @@ Dependent Variable Regression Ensemble
 \examples{
 ensemble_lm(formula = Sepal.Length ~ ., data = iris[,-5],
 n_predictions=100, n_train_points=100, error_agg_fun = median, 
-scores_only = T)#' 
+scores_only = T)
 }
 \references{
 section 3.2.1 of "Outlier Analysis" (C. C. Aggarwal. Outlier Analyis. 

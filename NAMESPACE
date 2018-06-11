@@ -2,6 +2,7 @@
 
 export(also)
 export(chisq_mvn)
+export(dist_to_centers)
 export(dvr_ensemble)
 export(nearest_neighbors)
 export(one_hot)

@@ -1,3 +1,6 @@
+tidy_error_message <- function(..., prefix = " ", initial = ""){
+    stop(strwrap(..., prefix = prefix, initial = initial), call. = FALSE)
+}
 
 fast_mean <- function(x) {
     sum(x) / length(x)
@@ -52,4 +55,11 @@ char_to_factor <- function(data) {
 
     return(data_tbl)
 }
+
+check_df_mat <- function(data, error_msg) {
+    if (!(any(c("data.frame", "matrix") %in% class(data)))) 
+        tidy_error_message(error_msg)
+}
+
+
 

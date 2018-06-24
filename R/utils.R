@@ -39,11 +39,18 @@ clear_colname_spaces <- function(data, substitute = "") {
 }
 
 make_tibble <- function(data) {
-    
     if ("tbl" %in% class(data)) {
         data
     } else {
         dplyr::as_tibble(data)
+    }
+}
+
+make_matrix <- function(data) {
+    if ("matrix" %in% class(data)) {
+        data
+    } else {
+        as.matrix(data)
     }
 }
 

@@ -4,8 +4,8 @@
 \alias{pca_bag}
 \title{PCA Rotated Bagging}
 \usage{
-pca_bag(data, scale = T, n_features = floor(sqrt(ncol(data))),
-  n_iterations = 50, method)
+pca_bag(data, n_features = floor(sqrt(ncol(data))), n_iterations = 50,
+  method)
 }
 \arguments{
 \item{data}{a matrix or data.frame.}

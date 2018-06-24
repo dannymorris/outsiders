@@ -5,7 +5,7 @@
 #' @examples
 #' @export
 #' 
-pca_bag <- function(data, scale=T, n_features=floor(sqrt(ncol(data))),
+pca_bag <- function(data, n_features = floor(sqrt(ncol(data))),
                     n_iterations=50, method) {
     
     # PCA rotated feature bagging is an ensemble-centric, unsupervised outlier detection
@@ -27,40 +27,38 @@ pca_bag <- function(data, scale=T, n_features=floor(sqrt(ncol(data))),
         message("Message: Number of iterations defaults to 50")
     }
     
-    if (missing(n_subsets)) {
+    if (missing(n_features)) {
         message("Message: Number of features in each subsample defaults to the
                 square root of the number of columns rounded down to the nearest integer")
     }
     
-    data_df <- if (!('data.frame' %in% class(data))) {
-        data.frame(data)
-    } else data
+    data_df <- make_tibble(data)
     
-    r <- n_subsets
-    m <- n_iterations
-    
-    score_matrix <- matrix(nrow=nrow(data_df), ncol=m)
+    score_matrix <- matrix(nrow = nrow(data_df), ncol = n_iterations)
     
     # iterate over the features m times and subset r subsets of features
     # rotate each subsample with PCA, retaining all components
     # score the data points with a method applied to pca rotated subsample
     # insert subsamples scores into score matrix
-    for (i in 1:m) {
-        features_index <- sample(1:ncol(data_df), r, F)
-        data_subset <- data_df[,features_index]
+    for (i in 1:n_iterations) {
+        features_index <- sample(1:ncol(data_df), n_features, F)
+        data_subset <- data_df[, features_index]
         data_subset_pca <- princomp(data_subset)$scores
         score <- method(data_subset_pca)
-        score_matrix[,i] <- score
+        score_matrix[, i] <- score
     }
     
-    if (scale == TRUE) {
-        score_matrix <- scale(score_matrix)
-    } else {
-        score_matrix
-    }
+    # if (scale == TRUE) {
+    #     score_matrix <- scale(score_matrix)
+    # } else {
+    #     score_matrix
+    # }
     
-    combined_errors <- apply(score_matrix, 1, sum)
+    score_matrix_scaled <- scale(score_matrix)
     
-    return(combined_errors)
+    combined_errors <- apply(score_matrix_scaled, 1, sum, na.rm = T)
     
-    }
+    #return(combined_errors)
+    return(score_matrix_scaled)
+    
+}

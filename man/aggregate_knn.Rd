@@ -2,24 +2,24 @@
 % Please edit documentation in R/nearest_neighbor.R
 \name{aggregate_knn}
 \alias{aggregate_knn}
-\title{Exact K-NN}
+\title{Aggregate point-wise distances over k nearest neighbors}
 \usage{
 aggregate_knn(data, fun, k)
 }
 \arguments{
-\item{fun}{A function to aggregate distances}
+\item{data}{A numeric matrix, data frame or distance matrix}
 
-\item{k}{An integer specifying value for K}
+\item{fun}{A function to aggregate point-wise distances}
 
-\item{distance_matrix}{A matrix or data frame or distance matrix}
+\item{k}{An integer specifying number of nearest neighbors used to compute aggregation}
 }
 \value{
 A numeric vector
 }
 \description{
-Exact K-NN
+Aggregate point-wise distances over k nearest neighbors
 }
 \examples{
-aggregate_knn(iris[, -5], mean, 3) # average 3-NN
-aggregate_knn(dist(iris[, -5]), median, 5)
+aggregate_knn(iris[, -5], mean, 3) # average 3-nn
+aggregate_knn(dist(iris[, -5]), max, 5) # equivalent to exact 5-nn
 }

@@ -2,21 +2,21 @@
 % Please edit documentation in R/nearest_neighbor.R
 \name{exact_knn}
 \alias{exact_knn}
-\title{Exact K-NN}
+\title{Compute exact k nearest neighbor distance}
 \usage{
 exact_knn(data, k = 1)
 }
 \arguments{
-\item{k}{An integer specifying value for K}
+\item{data}{A numeric matrix, data frame, or distance matrix}
 
-\item{distance_matrix}{A matrix or data frame or distance matrix}
+\item{k}{An integer specifying the k nearest neighbor}
 }
 \value{
 A numeric vector
 }
 \description{
-Exact K-NN
+Compute exact k nearest neighbor distance
 }
 \examples{
-exact_knn(iris[, -5], 3) # 3-NN
+exact_knn(iris[, -5], 3) # 3-nn
 }

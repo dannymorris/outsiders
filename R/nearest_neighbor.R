@@ -1,20 +1,21 @@
-#' Unsupervised K-Nearest Neighbors
+#' Return point-wise k nearest neighbor
 #' @param distance_matrix A distance matrix
-#' @param k Value for k. Either an integer or sequence of integers
-#' @return A data.frame
+#' @param k An integer or sequence of integers specifying the desired nearest neighbors
+#' @return An N x k tibble with ordered pairwise distances
 #' @details A distance matrix (either a full square matrix or a "dist" object) is
 #' required as input.
 #' @examples my_dist <- dist(scale(state.x77))
 #' nearest_neighbors(distance_matrix = my_dist, k = 1:3)
 #' @export
 #' 
-nearest_neighbors <- function(distance_matrix,  k) {
+nearest_neighbors <- function(distance_matrix, k) {
     
-    if (missing(distance_matrix)) 
-        stop("Distance matrix required.")
-    
+    if (!class(distance_matrix) %in% c("dist", "matrix", "data.frame")) {
+        stop("distance_matrix must be a dist object or a square matrix or data.frame")
+    }
+
     if (class(distance_matrix) != "dist" && nrow(distance_matrix) != ncol(distance_matrix))
-        stop("Distance matrix not a square matrix.")
+        stop("distance_matrix not a square matrix.")
     
     if (missing(k)) {
         k <- 1
@@ -30,44 +31,45 @@ nearest_neighbors <- function(distance_matrix,  k) {
         filter(N1 != N2) 
         
     
-    output <- pairwise_distances %>%
+    output_tbl <- pairwise_distances %>%
         group_by(N1) %>%
         arrange(N1, distance) %>%
         mutate(knn = row_number()) %>%
         filter(knn %in% k) %>%
         ungroup()
     
-    return(output)
+    return(output_tbl)
 }
 
 
-#' Exact K-NN
-#' @param distance_matrix A matrix or data frame or distance matrix
-#' @param k An integer specifying value for K
+#' Compute exact k nearest neighbor distance
+#' @param data A numeric matrix, data frame, or distance matrix
+#' @param k An integer specifying the k nearest neighbor
 #' @return A numeric vector
-#' @examples exact_knn(iris[, -5], 3) # 3-NN
+#' @examples exact_knn(iris[, -5], 3) # 3-nn
 #' @export
 #' 
 exact_knn <- function(data, k = 1) {
     
-    if (class(data) == "dist") {
+    if ("dist" %in% class(data)) {
         score <- nearest_neighbors(data, k = k) %>%
-            pull(distance)
+            dplyr::pull(distance)
     } else {
+        warning("Data not a distance matrix. Euclidean distance matrix computed by default.")
         score <- nearest_neighbors(dist(data), k = k) %>%
-            pull(distance)
+            dplyr::pull(distance)
     }
 
     return(score)
 }
 
-#' Exact K-NN
-#' @param distance_matrix A matrix or data frame or distance matrix
-#' @param fun A function to aggregate distances
-#' @param k An integer specifying value for K
+#' Aggregate point-wise distances over k nearest neighbors
+#' @param data A numeric matrix, data frame or distance matrix
+#' @param fun A function to aggregate point-wise distances
+#' @param k An integer specifying number of nearest neighbors used to compute aggregation
 #' @return A numeric vector
-#' @examples aggregate_knn(iris[, -5], mean, 3) # average 3-NN
-#' aggregate_knn(dist(iris[, -5]), median, 5)
+#' @examples aggregate_knn(iris[, -5], mean, 3) # average 3-nn
+#' aggregate_knn(dist(iris[, -5]), max, 5) # equivalent to exact 5-nn
 #' @export
 #' 
 aggregate_knn <- function(data, fun, k) {
@@ -76,9 +78,10 @@ aggregate_knn <- function(data, fun, k) {
         do.call(fun, list(vector))
     }
     
-    if (class(data) == "dist") {
+    if ("dist" %in% class(data)) {
         nn <- nearest_neighbors(data, k = 1:k)
     } else {
+        warning("Data not a distance matrix. Euclidean distance matrix computed by default.")
         nn <- nearest_neighbors(dist(data), k = 1:k)
     }
     
@@ -91,5 +94,4 @@ aggregate_knn <- function(data, fun, k) {
     
     return(score)
 }
-
 

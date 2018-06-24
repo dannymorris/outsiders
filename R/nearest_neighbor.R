@@ -13,7 +13,7 @@ nearest_neighbors <- function(distance_matrix, k) {
     if (!class(distance_matrix) %in% c("dist", "matrix", "data.frame")) {
         stop("distance_matrix must be a dist object or a square matrix or data.frame")
     }
-
+    
     if (class(distance_matrix) != "dist" && nrow(distance_matrix) != ncol(distance_matrix))
         stop("distance_matrix not a square matrix.")
     
@@ -24,13 +24,11 @@ nearest_neighbors <- function(distance_matrix, k) {
     
     dmat <- make_matrix(distance_matrix)
     
-    # pairwise distance
     pairwise_distances <- tibble(N1 = as.integer(rownames(dmat)[col(dmat)]),
                                  N2 = as.integer(colnames(dmat)[row(dmat)]),
                                  distance = c(dmat)) %>%
-        filter(N1 != N2) 
-        
-    
+        filter(N1 != N2)
+
     output_tbl <- pairwise_distances %>%
         group_by(N1) %>%
         arrange(N1, distance) %>%

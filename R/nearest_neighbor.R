@@ -24,8 +24,8 @@ nearest_neighbors <- function(distance_matrix, k) {
     
     dmat <- make_matrix(distance_matrix)
     
-    pairwise_distances <- tibble(N1 = as.integer(rownames(dmat)[col(dmat)]),
-                                 N2 = as.integer(colnames(dmat)[row(dmat)]),
+    pairwise_distances <- tibble(N1 = as.numeric(as.factor(rownames(dmat)[col(dmat)])),
+                                 N2 = as.numeric(as.factor(colnames(dmat)[row(dmat)])),
                                  distance = c(dmat)) %>%
         filter(N1 != N2)
 

@@ -46,7 +46,7 @@ pca_bag <- function(data, n_features = floor(sqrt(ncol(data))),
         features_index <- sample(1:ncol(data_tbl), n_features, F)
         data_subset <- data_tbl[, features_index]
         pca_scores <- princomp(data_subset)$scores
-        outlier_score <- do.call(method, list(pca_scores))
+        outlier_score <- do.call(outlier_fun, list(pca_scores))
         score_matrix[, i] <- outlier_score
     }
     

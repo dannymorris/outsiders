@@ -3,3 +3,4 @@
 .RData
 .Ruserdata
 R/dev.R
+inst/doc

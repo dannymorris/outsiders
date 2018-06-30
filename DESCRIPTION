@@ -12,4 +12,7 @@ ByteCompile: true
 RoxygenNote: 6.0.1
 Suggests: dplyr,
     tidyr,
-    caret
+    caret,
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr

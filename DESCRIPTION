@@ -16,3 +16,5 @@ Suggests: dplyr,
     knitr,
     rmarkdown
 VignetteBuilder: knitr
+URL: https://github.com/dannymorris/outsiders
+BugReports: https://github.com/dannymorris/outsiders/issues

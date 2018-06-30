@@ -1,3 +1,4 @@
-outsiders.html
-outsiders_files
-outsiders_cache
+figure
+*.html
+*.md
+rsconnect

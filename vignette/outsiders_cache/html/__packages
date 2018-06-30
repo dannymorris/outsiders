@@ -1,0 +1,9 @@
+base
+outsiders
+dplyr
+tidyr
+ggplot2
+knitr
+kableExtra
+QuickR
+bindrcpp

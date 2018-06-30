@@ -5,10 +5,6 @@ date: "June 16, 2018"
 output:
   prettydoc::html_pretty:
     theme: leonids
-vignette: >
-  %\VignetteIndexEntry{Applications}
-  %\VignetteEngine{knitr::rmarkdown}
-  \usepackage[utf8]{inputenc}
 ---
 
 ```{r setup, include=FALSE}

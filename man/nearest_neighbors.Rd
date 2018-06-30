@@ -2,20 +2,20 @@
 % Please edit documentation in R/nearest_neighbor.R
 \name{nearest_neighbors}
 \alias{nearest_neighbors}
-\title{Unsupervised K-Nearest Neighbors}
+\title{Return point-wise k nearest neighbor}
 \usage{
 nearest_neighbors(distance_matrix, k)
 }
 \arguments{
 \item{distance_matrix}{A distance matrix}
 
-\item{k}{Value for k. Either an integer or sequence of integers}
+\item{k}{An integer or sequence of integers specifying the desired nearest neighbors}
 }
 \value{
-A data.frame
+An N x k tibble with ordered pairwise distances
 }
 \description{
-Unsupervised K-Nearest Neighbors
+Return point-wise k nearest neighbor
 }
 \details{
 A distance matrix (either a full square matrix or a "dist" object) is

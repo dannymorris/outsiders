@@ -5,7 +5,7 @@
 \title{PCA Rotated Bagging}
 \usage{
 pca_bag(data, n_features = floor(sqrt(ncol(data))), n_iterations = 50,
-  method)
+  outlier_fun, scores_fun = sum, scores_only = TRUE)
 }
 \arguments{
 \item{data}{a matrix or data.frame.}

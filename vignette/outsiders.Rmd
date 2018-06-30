@@ -2,11 +2,13 @@
 title: 'Outlier Analysis for Multidimensional Data Using the `outsiders` package'
 author: "Danny Morris (drmorris87@outlook.com)"
 date: "June 16, 2018"
-output: 
-    html_document:
-        theme: lumen
-        toc: true
-        toc_float: true
+output:
+  prettydoc::html_pretty:
+    theme: leonids
+vignette: >
+  %\VignetteIndexEntry{Applications}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
 ---
 
 ```{r setup, include=FALSE}

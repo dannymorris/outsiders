@@ -23,6 +23,7 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = TRUE,
 ```{r, warning = FALSE}
 # document dependencies
 library(outsiders)   # devtools::install_github("dannymorris/outsiders") to install
+
 library(dplyr)       # data manipualation (CRAN)
 library(tidyr)       # structural formatting and data standardization (CRAN)
 library(ggplot2)     # static data visualization (CRAN)
@@ -37,6 +38,7 @@ library(QuickR)      # another personal package with utility functions
 
 ```{r}
 state.x77 %>%
+    head() %>%
     kable()
 ```
 
@@ -80,6 +82,8 @@ Visual analysis of the first four principal components reveals the presence of m
 
 # Assessment of Multivariate Normality
 
+We can use the function `chisq_mvn()` to generate ordered multivariate Mahalanobis distances, which follow a chi-squared distribution under the assumption of multivariate normality.
+
 ```{r}
 chisq_distances <- outsiders::chisq_mvn(data_scaled)
 
@@ -95,7 +99,7 @@ The data appears largely non-normal in the multivariate sense.
 
 ## Attribute-Wise Learning 
 
-The `also` function implements Attribute-Wise Learning for Scoring Outliers (ALSO), which combines supervised and unsupervised learning to score outliers using dependent variable modeling of all features. For each variable in the original data set, a supervised model (classification or regression) is fit using the remaining variables as predictors. Outlier scores reflect the distance of the predicted value for a given observation to its actual value. Outlier scores are then summed to provide a single score suitable for extreme-value analysis.
+The `also()` function implements Attribute-Wise Learning for Scoring Outliers (ALSO), which combines supervised and unsupervised learning to score outliers using dependent variable modeling of all features. For each variable in the original data set, a supervised model (classification or regression) is fit using the remaining variables as predictors. Outlier scores reflect the distance of the predicted value for a given observation to its actual value. Outlier scores are then summed to provide a single score suitable for extreme-value analysis.
 
 ### Random Forest
 
@@ -109,16 +113,39 @@ also_rand_forest <- outsiders::also(data = data_scaled,
 We will use this custom function to automate and standardize visualizations of outlier scores again the first four principal components.
 
 ```{r}
-plot_score <- function(score, formula = Comp.2 ~ Comp.1, data = pca_scores, 
-                       low = "grey90", high = "blue", ...) {
+plot_score <- function(score, global_title, low = "green4", high = "orange", 
+                       cex = 1.3, cols = QuickR::add_alpha(mapping, 0.85), ...) {
+    
+    # numeric color scale
     colors <- colorRamp(c(low, high))
     mapping <- rgb(colors(score / max(score)), maxColorValue = 255) 
-    
-    pairs(pca_scores, pch = 19,
-         col = QuickR::add_alpha(mapping, 0.85), ...)
-}
 
-plot_score(also_rand_forest, main = "ALSO with Random Forests")
+    # construct base plots
+    build_plot <- function(data, title, xlab, ylab, ...) {
+        plot(data, pch = 19, col = cols,
+             cex = cex, xlab = xlab, ylab = ylab, xaxt = "n", yaxt = "n", 
+             ...)
+        title(main = title, line = 0.5)
+    }
+    
+    # set plotting region
+    par(mfrow = c(2,2),
+        mar = c(2,2,3,2),
+        mgp = c(1,0,0))
+    
+    # build 3 base plots
+    build_plot(pca_scores[, 1:2], title = "PC 1 & 2", xlab = "PC 1", ylab = "PC 2")
+    build_plot(pca_scores[, 2:3], title = "PC 2 & 3", xlab = "PC 2", ylab = "PC 3")
+    build_plot(pca_scores[, 3:4], title = "PC 3 & 4", xlab = "PC 3", ylab = "PC 4")
+    
+    # add global title
+    par(mfrow = c(1,1))
+    mtext(text = global_title, line = 2)
+}
+```
+
+```{r}
+plot_score(also_rand_forest, global_title = "ALSO with Random Forest")
 ```
 
 ### Ordinary Least Squares
@@ -130,13 +157,13 @@ also_lm <- outsiders::also(data = data_scaled,
                            n_folds = 10,
                            scores_only = TRUE)
 
-plot_score(also_lm, main = "ALSO with OLS")
+plot_score(also_lm, global_title = "ALSO with OLS")
 ```
 
 ## Proximity-based Scoring
 <hr>
 
-This section will show two variations of k-nearest neighbors.
+This section will show two variations of k-nearest neighbors based on standard Euclidean distances: *average k-nearest neighbors* and *harmonic mean of N-nearest neighbors.* Both technques use the `aggregate_knn()` function to aggregate distances over a selection of k-nearest neighbors.
 
 ```{r}
 average_5nn <- outsiders::aggregate_knn(data_scaled, fun = mean, k = 5)
@@ -145,19 +172,50 @@ harmonic_5nn <- outsiders::aggregate_knn(data_scaled, fun = QuickR::harmonic_mea
 ```
 
 ```{r}
-plot_score(average_5nn, main = "Mean Euclidean Distance\n 5-Nearest Neighbors")
-plot_score(harmonic_5nn, main = "Harmonic Mean Euclidean Distance\n N-Nearest Neighbors")
+plot_score(average_5nn, global_title = "Average 5-Nearest Neighbors")
+plot_score(harmonic_5nn, global_title = "Harmonic Mean N-Nearest Neighbors")
 ```
 
-Compared to the average Euclidean 5-nearest neightbors outlier score the harmonic mean variation seemingly detects more noise.
+Compared to the average Euclidean 5-nearest neightbors outlier score the harmonic mean variation detects more noise.
 
 ## Cluster-Based Scoring
 
+The `dist_to_centers()` function can be used to find the multivariate distances of data points to centroids (e.g. mean). In this application, we'll generate cluster mean vectors from Ward's hierarchical clustering and calculate the minimum Mahalanobis distance of each data point to each cluster mean vector. The minimum Mahalanobis distance serves as the outlier score.
+
+```{r}
+
+# Ward's hierarchical clustering
+pca_distance_mat <- dist(pca_scores)
+pca_hcl <- hclust(pca_distance_mat, 'ward.D2')
+plot(pca_hcl)
+
+# 3-cluster solution
+hcl3 <- cutree(pca_hcl, 3)
+
+# cluster mean vectors
+centers <- pca_scores %>%
+    as_tibble() %>%
+    mutate(clus = hcl3) %>%
+    group_by(clus) %>%
+    summarise_all(mean) 
+
+# minimum Mahalanobis distance of observations to cluster means
+min_d2c <- outsiders::dist_to_centers(pca_scores, labels = hcl3, 
+                                      centers = centers[, -1]) %>%
+    apply(., 1, min)
+
+
+plot_score(min_d2c, global_title = "Minimum Mahalanobis Distance to Clusters")
+```
+
 ## PCA Rotation Forest
+
+PCA rotation forest is an unsupervised ensemble technique that transforms subsamples of the oringinal data into new variables via principal components. All principal components are retained in each iteration, and the outlier scores from each iteration are summed to produce a final outlier score. The function `pca_bag()` is used to generate scores.
 
 ```{r}
 pca_forest <- outsiders::pca_bag(data = data_scaled,
                                  outlier_fun = function(x) mahalanobis(x, colMeans(x), cov(x)))
 
-plot_score(pca_forest, main = "50-Bag PCA Rotation Forest Combining\n Mahalanobis Distance Scores")
+plot_score(pca_forest, 
+           global_title = "PCA Rotation Forest Combining Mahalanobis Distance Scores")
 ```
